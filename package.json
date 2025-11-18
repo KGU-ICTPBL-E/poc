@@ -1,0 +1,25 @@
+{
+  "name": "poc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install:all": "npm install",
+    "start:fe": "npm run dev ==workspace=fe"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KGU-ICTPBL-E/poc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KGU-ICTPBL-E/poc/issues"
+  },
+  "homepage": "https://github.com/KGU-ICTPBL-E/poc#readme",
+  "description": "",
+  "workspaces": [
+    "fe"
+  ]
+}
