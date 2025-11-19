@@ -119,7 +119,7 @@ export default function AlertDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link 
-                to="/" 
+                to="/home" 
                 className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
               >
                 <i className="ri-arrow-left-line text-xl text-gray-600"></i>

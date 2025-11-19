@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuthContext } from '../../context/AuthContext';
 import Calendar from './components/Calendar';
 import SummaryCard from './components/SummaryCard';
 import DonutChart from './components/DonutChart';
@@ -16,7 +18,10 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dangerZones, setDangerZones] = useState<string[]>([]);
+  const [adminCheckLoading, setAdminCheckLoading] = useState(false);
   const timeSeriesData = generateTimeSeriesData();
+  const navigate = useNavigate();
+  const { session, profile } = useAuthContext();
 
   // 실시간 시간 업데이트
   useEffect(() => {
@@ -67,20 +72,76 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center gap-6">
-              <Link 
-                to="/admin" 
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors whitespace-nowrap cursor-pointer"
+              <button
+                onClick={async () => {
+                  if (!session?.user) {
+                    alert('로그인이 필요합니다.')
+                    return
+                  }
+                  
+                  setAdminCheckLoading(true)
+                  try {
+                    // Supabase에서 현재 사용자의 role 확인
+                    const { data: userInfo, error } = await supabase
+                      .from('user_info')
+                      .select('role, status')
+                      .eq('id', session.user.id)
+                      .single()
+                    
+                    if (error || !userInfo) {
+                      alert('사용자 정보를 확인할 수 없습니다.')
+                      return
+                    }
+                    
+                    if (userInfo.status !== 'approved') {
+                      alert('승인된 계정만 접근할 수 있습니다.')
+                      return
+                    }
+                    
+                    if (userInfo.role === 'admin') {
+                      navigate('/admin')
+                    } else {
+                      alert('관리자 권한이 없습니다.')
+                    }
+                  } catch (err) {
+                    alert('권한 확인 중 오류가 발생했습니다.')
+                  } finally {
+                    setAdminCheckLoading(false)
+                  }
+                }}
+                disabled={adminCheckLoading}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                관리자 화면
-              </Link>
+                {adminCheckLoading ? '확인 중...' : '관리자 화면'}
+              </button>
               <div className="text-right">
                 <p className="text-sm text-gray-600">현재 시간</p>
                 <p className="text-lg font-semibold text-gray-900">{format(currentTime, 'HH:mm:ss')}</p>
               </div>
+              {profile?.email && (
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">로그인</p>
+                  <p className="text-sm font-medium text-gray-900">{profile.email}</p>
+                </div>
+              )}
               <div className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-lg">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-green-700">정상 가동 중</span>
               </div>
+              <button
+                onClick={async () => {
+                  const { error } = await supabase.auth.signOut()
+                  if (error) {
+                    alert('로그아웃 중 오류가 발생했습니다.')
+                  } else {
+                    navigate('/', { replace: true })
+                  }
+                }}
+                className="px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium text-red-700 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <i className="ri-logout-box-line mr-1"></i>
+                로그아웃
+              </button>
             </div>
           </div>
         </div>
